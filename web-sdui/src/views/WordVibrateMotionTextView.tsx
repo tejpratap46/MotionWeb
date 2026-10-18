@@ -32,7 +32,7 @@ export const WordVibrateMotionTextView: React.FC<{ props: MotionViewProps; curre
       }}
     >
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-        {words.map((word, index) => {
+        {words.map((word: string, index: number) => {
           const phase = index * phaseShiftPerWord;
           // Matching the Android implementation:
           // val offsetX = sin(frame.toDouble() * frequency + phase).toFloat() * amplitude
