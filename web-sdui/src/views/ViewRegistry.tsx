@@ -17,12 +17,16 @@ import { VerticalStackMotionView } from './VerticalStackMotionView';
 import { SyncedLyricsMotionTextView } from './SyncedLyricsMotionTextView';
 import { MotionProgressBar } from './MotionProgressBar';
 import { WordVibrateMotionTextView } from './WordVibrateMotionTextView';
+import { IMessageBubbleTextView } from './IMessageBubbleTextView';
+import { IMessageChatMotionView } from './IMessageChatMotionView';
 
 export const ViewRegistry: Record<string, React.FC<{ props: MotionViewProps; currentFrame: number; config: MotionConfig }>> = {
   TransparentTextView: TransparentTextView,
   TypeWriterTextView: WordWriterTextView,
   WordWriterTextView: WordWriterTextView,
   WordBlinkTextView: WordBlinkTextView,
+  IMessageBubbleTextView: IMessageBubbleTextView,
+  IMessageChatMotionView: IMessageChatMotionView,
   GradientView: GradientView,
   VideoFrameView: VideoFrameView,
   MotionImageView: MotionImageView,
