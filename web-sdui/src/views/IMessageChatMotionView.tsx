@@ -54,6 +54,8 @@ export const IMessageChatMotionView: React.FC<{
         boxSizing: 'border-box',
         overflow: 'hidden',
         gap: '12px',
+        maskImage: 'linear-gradient(to bottom, transparent 0%, transparent 6%, black 16%, black 100%)',
+        WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, transparent 6%, black 16%, black 100%)',
         ...style,
       }}
     >
@@ -62,20 +64,42 @@ export const IMessageChatMotionView: React.FC<{
         const bubbleBg = isOutgoing ? defaultBubbleColor : incomingBubbleColor;
         const txtColor = isOutgoing ? defaultTextColor : incomingTextColor;
 
-        let visibleText = lyric.text;
+        const words = lyric.text ? lyric.text.split(' ') : [];
+        if (words.length === 0) return null;
+
+        let completedWords = words;
+        let activeWord = '';
+        let activeWordAlpha = 1.0;
+        let bubbleAlpha = 1.0;
 
         if (index === activeIndex) {
           const nextFrame =
             index + 1 < lyrics.length ? lyrics[index + 1].frame : lyric.frame + 60;
           const duration = Math.max(1, nextFrame - lyric.frame);
           const elapsed = Math.max(0, currentFrame - lyric.frame);
-          const progress = Math.min(1, (elapsed * writingSpeed) / duration);
+          const effectiveSpeed = writingSpeed > 0 ? writingSpeed : 1.0;
+          const lineTypingDuration = Math.max(1, duration / effectiveSpeed);
+          const lineProgress = Math.min(1, Math.max(0, elapsed / lineTypingDuration));
 
-          const words = lyric.text.split(' ');
-          const visibleWordCount = Math.floor(progress * words.length);
-          if (visibleWordCount === 0) return null;
+          const continuousWordIndex = lineProgress * words.length;
 
-          visibleText = words.slice(0, visibleWordCount).join(' ');
+          if (lineProgress < 1.0) {
+            const activeWordIndex = Math.min(words.length - 1, Math.floor(continuousWordIndex));
+            const wordSubProgress = Math.min(1, Math.max(0, continuousWordIndex - activeWordIndex));
+
+            const framesPerWord = lineTypingDuration / words.length;
+            const animFrames = Math.max(2, Math.min(6, framesPerWord * 0.75));
+            const animDurationFraction = Math.min(0.9, Math.max(0.2, animFrames / framesPerWord));
+            const wordAnimT = Math.min(1, Math.max(0, wordSubProgress / animDurationFraction));
+
+            const f = 1 - wordAnimT;
+            const easedAnimT = 1 - f * f * f;
+
+            completedWords = words.slice(0, activeWordIndex);
+            activeWord = words[activeWordIndex];
+            activeWordAlpha = easedAnimT;
+            bubbleAlpha = activeWordIndex === 0 ? easedAnimT : 1.0;
+          }
         }
 
         return (
@@ -85,6 +109,9 @@ export const IMessageChatMotionView: React.FC<{
               display: 'flex',
               justifyContent: isOutgoing ? 'flex-end' : 'flex-start',
               width: '100%',
+              flexShrink: 0,
+              opacity: bubbleAlpha,
+              transition: 'opacity 0.15s ease-out, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
             <div
@@ -102,10 +129,26 @@ export const IMessageChatMotionView: React.FC<{
                 lineHeight: 1.3,
                 wordBreak: 'break-word',
                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-                transition: 'width 0.1s ease-out',
+                transition: 'width 0.2s cubic-bezier(0.16, 1, 0.3, 1), padding 0.15s ease-out',
               }}
             >
-              <span>{visibleText}</span>
+              <span>
+                {completedWords.length > 0 && completedWords.join(' ')}
+                {activeWord && (
+                  <>
+                    {completedWords.length > 0 && ' '}
+                    <span
+                      style={{
+                        opacity: activeWordAlpha,
+                        display: 'inline-block',
+                        transition: 'opacity 0.1s ease-out',
+                      }}
+                    >
+                      {activeWord}
+                    </span>
+                  </>
+                )}
+              </span>
             </div>
           </div>
         );
